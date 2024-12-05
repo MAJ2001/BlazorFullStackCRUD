@@ -1,0 +1,82 @@
+﻿@page "/villain-comics"
+@inject IComicsServices ComicService
+
+<h3>Comics</h3>
+
+<EditForm Model="@this" OnValidSubmit="UpdateComic">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label for="Comic">Comic Name</label>
+        <InputText @bind-Value="comicName" class="form-control" id="Comic" />
+    </div>
+    <br/>
+    <button type="button" class="btn btn-primary me-2" @onclick="CreateComic">Create Comic</button>
+    <button type="button" class="btn btn-primary me-2" @onclick="UpdateComic">Update Comic</button>
+    <button type="button" class="btn btn-danger" @onclick="DeleteComic">Delete Comic</button>
+</EditForm>
+
+<p>@statusMessage</p>
+
+@code {
+    public string comicName = string.Empty;
+    public string statusMessage = string.Empty;
+
+    public async void CreateComic()
+    {
+        if (!string.IsNullOrEmpty(comicName))
+        {
+            var comic = new BlazorFullStackCRUD.Shared.Comic
+                {
+                    Name = comicName
+                    // Populate other properties if needed
+                };
+
+            await ComicService.AddNewComic(comic);
+            statusMessage = $"Comic '{comicName}' has been created!";
+        }
+        else
+        {
+            statusMessage = "Please enter a comic name.";
+        }
+    }
+
+
+    public async void UpdateComic()
+    {
+        if (!string.IsNullOrEmpty(comicName))
+        {
+            var comic = new BlazorFullStackCRUD.Shared.Comic
+                {
+                    Name = comicName
+                    // Populate other properties if needed
+                };
+
+            await ComicService.UpdateComic(comic);
+            statusMessage = $"Comic '{comicName}' has been updated!";
+        }
+        else
+        {
+            statusMessage = "Please enter a comic name.";
+        }
+    }
+
+
+    public int comicId; // Add this variable for the ID
+
+    public async void DeleteComic()
+    {
+        if (!string.IsNullOrEmpty(comicName))
+        {
+            await ComicService.DeleteComic(comicId); // Use the comicId variable here
+            statusMessage = $"Comic '{comicName}' has been deleted.";
+            comicName = string.Empty; // Clear the text box after deletion
+        }
+        else
+        {
+            statusMessage = "Please enter a comic name to delete.";
+        }
+    }
+
+}

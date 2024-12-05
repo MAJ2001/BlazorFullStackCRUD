@@ -1,0 +1,149 @@
+﻿@page "/Villain"
+@page "/Villain/{id:int}"
+@inject ISuperVillainService SuperVillainService
+@inject NotificationService notificationService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+
+
+<PageTitle>@(Id == null ? "Create a new Villain" : $"Edit {villain.VillainName}")</PageTitle>
+<h3>@(Id == null ? "Create a new Villain" : $"Edit {villain.VillainName}")</h3>
+
+<EditForm Model="villain" OnSubmit="HandleSubmit">
+    <div>
+        <label for="firstname">First Name</label>
+        <InputText id="firstname" @bind-Value="villain.FirstName" class="form-control"></InputText>
+    </div>
+    <div>
+        <label for="lastname">Last Name</label>
+        <InputText id="lastname" @bind-Value="villain.LastName" class="form-control"></InputText>
+    </div>
+    <div>
+        <label for="villainname">Villain Name</label>
+        <InputText id="villainname" @bind-Value="villain.VillainName" class="form-control"/>
+    </div>
+    <div>
+        <label>Comic</label><br />
+        <InputSelect @bind-Value="villain.ComicId" class="form-select" @onchange="HandleComicChange">
+            @foreach (var comic in SuperVillainService.Comics)
+            {
+                <option value="@comic.Id">@comic.Name</option>
+            }
+        </InputSelect>
+
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary me-2">@btnText</button>
+    @if (villain?.Id != null)
+    {
+        <button type="button" class="btn btn-primary me-2" @onclick="NavigateToAddComicPage">Add New Comic</button>
+        <button type="button" class="btn btn-danger" @onclick="@(() => DeleteVillain(villain.Id))">Delete Villain</button>
+    }
+</EditForm>
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <div class="notification @MessageType">
+        @Message
+    </div>
+}
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    string btnText = string.Empty;
+
+    Supervillain villain = new Supervillain { Comic = new Comic() };
+
+    protected override async Task OnInitializedAsync()
+    {
+        btnText = Id == null ? "Save New Villain" : "Update Villain";
+        await SuperVillainService.GetComics();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id == null)
+        {
+            villain = new Supervillain { ComicId = SuperVillainService.Comics.FirstOrDefault()?.Id ?? 0 };
+        }
+        else
+        {
+            villain = await SuperVillainService.GetSingleVillain((int)Id);
+        }
+    }
+
+    private void NavigateToAddComicPage()
+    {
+        NavigationManager.NavigateTo("/villain-comics");
+    }
+
+
+    async Task HandleSubmit()
+    {
+        if (Id == null)
+        {
+            await SuperVillainService.CreateVillain(villain);
+            Show("Villain created successfully!", "success");
+        }
+        else
+        {
+            await SuperVillainService.UpdateVillain(villain);
+            Show("Villain updated successfully!", "success");
+        }
+    }
+
+    async Task DeleteVillain(int id)
+    {
+        await SuperVillainService.DeleteVillain(id);
+
+        // Trigger the notification
+        notificationService.Notify(new NotificationMessage()
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = "Villain deleted successfully!",
+                Duration = 4000 // Set duration to 4 seconds
+            });
+
+        // Wait for the notification to display before navigating
+        await Task.Delay(4000);
+
+        // Navigate to the main page
+        NavigationManager.NavigateTo("/Supervillain");
+    }
+
+    private void HandleComicChange(ChangeEventArgs e)
+    {
+        var selectedValue = e!.Value!.ToString();
+        if (selectedValue == "Add New Comic") // Check for the "Add New Comic" option
+        {
+            // Navigate to Add New Comic page
+            NavigationManager.NavigateTo("/villain-comics");
+        }
+        else
+        {
+            villain.ComicId = int.Parse(selectedValue!); // Update selected ComicId
+        }
+    }
+
+
+
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public string MessageType { get; set; } = "info";
+
+
+    public void Show(string message, string messageType)
+    {
+        Message = message;
+        MessageType = messageType;
+        StateHasChanged();
+    }
+
+    public void Clear()
+    {
+        Message = string.Empty;
+        StateHasChanged();
+    }
+}

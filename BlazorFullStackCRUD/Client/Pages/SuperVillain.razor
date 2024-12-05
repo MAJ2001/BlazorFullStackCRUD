@@ -1,0 +1,78 @@
+﻿@page "/Supervillain"
+@inject ISuperVillainService SuperVillainService
+@inject NavigationManager NavigationManager
+@inherits LayoutComponentBase
+
+<PageTitle>Super Villains</PageTitle>
+
+<h3>Super Villain</h3>
+
+
+
+<RadzenDialog />
+
+<body>
+    <div class="rz-application">
+        @Body
+    </div>
+</body>
+
+
+<table class="table table-striped table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">First Name</th>
+            <th scope="col">Last Name</th>
+            <th scope="col">Villain Name</th>
+            <th scope="col">Comic</th>
+            <th scope="col">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (SuperVillainService.Villains != null && SuperVillainService.Villains.Any())
+        {
+            @foreach (var villain in SuperVillainService.Villains)
+            {
+                <tr>
+                    <td>@villain.FirstName</td>
+                    <td>@villain.LastName</td>
+                    <td>@villain.VillainName</td>
+                    <td>@(villain.Comic?.Name?? "N/A")</td>
+                    <td>
+                        <button class="btn btn-primary"
+                        @onclick="() => ShowVillain(villain.Id)"
+                        aria-label="Edit @villain.VillainName">
+                            <i class="oi oi-pencil" aria-hidden="true"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center">No villains available</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<button class="btn btn-primary" @onclick="CreateNewVillain">Create New Villain</button>
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await SuperVillainService.GetSuperVillain();
+    }
+
+    void ShowVillain(int id)
+    {
+        NavigationManager.NavigateTo($"villain/{id}");
+    }
+
+    void CreateNewVillain()
+    {
+        NavigationManager.NavigateTo("/Villain");
+    }
+
+}
